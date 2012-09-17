@@ -1,0 +1,1 @@
+This is Kinect Explorer, for use at Elon University.
