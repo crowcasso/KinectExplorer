@@ -13,8 +13,18 @@ using Microsoft.Xna.Framework.Media;
 
 namespace KinectExplorer
 {
+    /// <summary>
+    /// A class for helping with text formatting
+    /// </summary>
     public static class TextUtils
     {
+        /// <summary>
+        /// Returns a String cut off to a given max width using the given font
+        /// </summary>
+        /// <param name="font">The font to use when measuring</param>
+        /// <param name="text">The text to cut</param>
+        /// <param name="maxWidth">The max width for the text</param>
+        /// <returns>The cutoff string</returns>
         public static String CutTextToWidth(SpriteFont font, String text, int maxWidth)
         {
             float textWidth = font.MeasureString(text).X;

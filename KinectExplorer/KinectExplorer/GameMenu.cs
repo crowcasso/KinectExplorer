@@ -39,10 +39,10 @@ namespace KinectExplorer
         private int selectedGame = -1;
         private float selectionProgress;
         
-        private TimeSpan QUIT_TIME = new TimeSpan(0, 0, 3);
+        private TimeSpan QUIT_TIME = new TimeSpan(0, 0, 2);
         private TimeSpan tryingQuit = new TimeSpan();
 
-        private TimeSpan SCREEN_SAVER_TIMEOUT = new TimeSpan(0, 0, 30);
+        private TimeSpan SCREEN_SAVER_TIMEOUT = new TimeSpan(0, 0, 20);
         private TimeSpan noSkeletons = new TimeSpan();
 
         private TimeSpan BREAK_SCREEN_SAVER = new TimeSpan(0, 0, 3);
@@ -52,37 +52,61 @@ namespace KinectExplorer
         
         private bool gamePaused;
 
-        protected override Size getResolution() { return new Size(1920, 1080); }
+        private Skeleton PrimarySkeleton
+        {
+            get
+            {
+                return KinectManager.SkeletonA == null ? KinectManager.SkeletonB : KinectManager.SkeletonA;
+            }
+        }
 
-        protected override string getContentRoot(Type t)
+        protected override Size GetResolution() 
+        { 
+            System.Windows.Forms.Screen screen = System.Windows.Forms.Screen.PrimaryScreen; 
+            //return new Size(screen.Bounds.Width, screen.Bounds.Height); 
+            return new Size(1920, 1080); 
+        }
+
+        protected override string GetContentRoot(Type t)
         {
             int index = Array.IndexOf(games, t);
             if (index >= 0) return gameDirs[index] + "\\";
             return "";
         }
 
-        protected override Type getKinnectGame()
+        protected override Type GetKinnectGame()
         {
             return null;
         }
 
+        private void addLocalGame(Type game)
+        {
+            Array.Resize<Type>(ref games, games.Length + 1);
+            games[games.Length - 1] = game;
+
+            Array.Resize<String>(ref gameDirs, gameDirs.Length + 1);
+            gameDirs[gameDirs.Length - 1] = "Content";
+        }
+
         public GameMenu(Type[] games, String[] gameDirs) : base()
         {
-            for (int i = 0; i < 8; i++)
-            {
-                Array.Resize<Type>(ref games, games.Length + 1);
-                games[games.Length - 1] = typeof(TestGame);
 
-                Array.Resize<String>(ref gameDirs, gameDirs.Length + 1);
-                gameDirs[gameDirs.Length - 1] = "Content";
-            }
+
             this.games = games;
             this.gameDirs = gameDirs;
+            for (int i = 0; i < 1; i++)
+            {
+                addLocalGame(typeof(TestGame));
+            }
+            addLocalGame(typeof(DepthGame));
+            addLocalGame(typeof(BrowserGame));
+            games = this.games;
+            gameDirs = this.gameDirs;
 
             gameConfigs = new GameConfig[games.Length];
             for (int i = 0; i < games.Length; i++)
             {
-                KinectGame game = KinectGame.Create(games[i], graphics, resolution);
+                KinectGame game = KinectGame.Create(games[i], new GameParameters(resolution, graphics, Window));
                 gameConfigs[i] = game.GetConfig();
             }
 
@@ -93,7 +117,14 @@ namespace KinectExplorer
         protected override void Initialize()
         {
             base.Initialize();
-            //StartGame(typeof(Slideshow));
+
+            graphics.PreferredBackBufferHeight = resolution.Height;
+            graphics.PreferredBackBufferWidth = resolution.Width;
+
+            System.Windows.Forms.Form gameForm = (System.Windows.Forms.Form)System.Windows.Forms.Form.FromHandle(Window.Handle);
+            gameForm.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            gameForm.Bounds = new System.Drawing.Rectangle(0, 0, resolution.Width, resolution.Height);
+            
         }
 
         protected override void LoadContent()
@@ -113,7 +144,7 @@ namespace KinectExplorer
         protected override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            if (KinectManager.SkeletonA == null && KinectManager.SkeletonB == null)
+            if (PrimarySkeleton == null)
             {
                 noSkeletons = noSkeletons.Add(gameTime.ElapsedGameTime);
                 if (noSkeletons.CompareTo(SCREEN_SAVER_TIMEOUT) > 0)
@@ -121,13 +152,14 @@ namespace KinectExplorer
                     if (runningGame == null || !runningGame.GetConfig().IsPassive)
                     {
                         EndGame();
-                        StartGame(typeof(Slideshow));
+                        StartGame(typeof(SlideshowGame));
                     }
                 }
             }
             else
             {
-                noSkeletons = new TimeSpan();
+                noSkeletons = noSkeletons.Subtract(gameTime.ElapsedGameTime);
+                if (noSkeletons.TotalMilliseconds < 0) noSkeletons = new TimeSpan();
             }
         }
 
@@ -163,6 +195,7 @@ namespace KinectExplorer
 
             if (runningGame != null && runningGame.GetConfig().IsPassive && isHandRaised())
             {
+                noSkeletons = new TimeSpan();
                 handRaised = handRaised.Add(gameTime.ElapsedGameTime);
                 if (handRaised.CompareTo(BREAK_SCREEN_SAVER) > 0)
                 {
@@ -174,12 +207,12 @@ namespace KinectExplorer
 
         protected override void UpdateHost(GameTime gameTime)
         {
-            if (KinectManager.SkeletonA != null)
+            if (PrimarySkeleton != null)
             {
                 float friction = 0.85f;
-                float depth = KinectManager.SkeletonA.Joints[JointType.HandRight].Position.Z;
-                Vector2 rightHandPos = KinectManager.GetJointPosOnScreen(KinectManager.SkeletonA.Joints[JointType.HandRight], resolution);
-                Vector2 rightElbowPos = KinectManager.GetJointPosOnScreen(KinectManager.SkeletonA.Joints[JointType.ElbowRight], resolution);
+                float depth = PrimarySkeleton.Joints[JointType.HandRight].Position.Z;
+                Vector2 rightHandPos = KinectManager.GetJointPosOnScreen(PrimarySkeleton.Joints[JointType.HandRight], resolution);
+                Vector2 rightElbowPos = KinectManager.GetJointPosOnScreen(PrimarySkeleton.Joints[JointType.ElbowRight], resolution);
                 
                 float nCursorRotation = (float)(Math.Atan2(rightHandPos.Y - rightElbowPos.Y, rightHandPos.X - rightElbowPos.X) + Math.PI / 2);
                 if (nCursorRotation - cursorRotation > Math.PI)
@@ -195,7 +228,7 @@ namespace KinectExplorer
                 cursorPosition.Y = lerp(cursorPosition.Y, rightHandPos.Y, friction);
 
 
-                cursorTrail.Add(KinectManager.SkeletonA.Joints[JointType.HandRight].Position);
+                cursorTrail.Add(PrimarySkeleton.Joints[JointType.HandRight].Position);
                 while (cursorTrail.Count > MAX_TRAIL) cursorTrail.RemoveAt(0);
                 if (cursorTrail.Count == MAX_TRAIL)
                 {
@@ -228,9 +261,14 @@ namespace KinectExplorer
                     Point center = gameRects[selectedGame].Center;
                     int dx = center.X - hand.X;
                     int dy = center.Y - hand.Y;
-                    float dis = (float)Math.Pow(dx * dx + dy * dy, 0.75) / gameRects[selectedGame].Width;
+                    //float dis = (float)Math.Pow(dx * dx + dy * dy, 0.75) / gameRects[selectedGame].Width;
+                    float dis = (float)Math.Pow(dx * dx + dy * dy, 0.5f);
 
-                    selectionProgress += 0.006f / Math.Max(0.3f, dis);
+                    //selectionProgress += 0.006f / Math.Max(0.3f, dis);
+                    if (dis > gameRects[selectedGame].Width / 3.5)
+                        selectionProgress += 0.002f;
+                    else
+                        selectionProgress += 0.004f;
                 }
 
                 if (selectionProgress >= 1)
@@ -265,10 +303,16 @@ namespace KinectExplorer
 
             if (runningGame.GetConfig().IsPassive)
             {
+                int interval = 30000;
+                int duration = 5000;
+
                 int border = 300;
                 Rectangle rect = new Rectangle(border, border, resolution.Width - border * 2, resolution.Height - border * 2);
 
-                double alphaMult = Math.Sin(gameTime.TotalGameTime.TotalMilliseconds / 1500);
+                double alphaMult = Math.Sin(gameTime.TotalGameTime.TotalMilliseconds * 2 * Math.PI / interval);
+                double startAlpha = Math.Sin(Math.PI * 2 * (0.25 - (double)duration / interval / 2));
+                double m = 1 / (1 - startAlpha);
+                alphaMult = m * (alphaMult - startAlpha);
                 alphaMult = Math.Max(alphaMult, 0);
 
                 spriteBatch.Draw(borderTexture, rect, new Color(0, 0, 0, (int)(200 * alphaMult)));
@@ -296,7 +340,7 @@ namespace KinectExplorer
                 drawGameRect(i, spriteBatch);
             }
 
-            if (KinectManager.SkeletonA != null)
+            if (PrimarySkeleton != null)
             {
                 int width = 50;
                 int height = 50 * cursorTexture.Height / cursorTexture.Width;
@@ -307,7 +351,7 @@ namespace KinectExplorer
             Rectangle rect = new Rectangle(border, 10, resolution.Width - border * 2, 90);
             spriteBatch.Draw(titleTexture, rect, new Color(75, 0, 150));
             rect.Offset(0, 15);
-            String message = "To play a game, hover over it. To quit the game, put your hands on your head.";
+            String message = "To play an app, hover over its center. To quit it, put your hands on your head.";
             TextUtils.DrawTextInRect(spriteBatch, directionsFont, message, rect, Color.White, true);
 
             spriteBatch.End();
@@ -315,14 +359,14 @@ namespace KinectExplorer
 
         private bool isHandRaised()
         {
-            if (KinectManager.SkeletonA == null) return false;
-            return KinectManager.SkeletonA.Joints[JointType.HandRight].Position.Y > 
-                KinectManager.SkeletonA.Joints[JointType.ElbowRight].Position.Y;
+            if (PrimarySkeleton == null) return false;
+            return PrimarySkeleton.Joints[JointType.HandRight].Position.Y > 
+                PrimarySkeleton.Joints[JointType.ElbowRight].Position.Y;
         }
 
         private bool handsOnHead()
         {
-            Skeleton sk = KinectManager.SkeletonA;
+            Skeleton sk = PrimarySkeleton;
             if (sk == null) return false;
             SkeletonPoint rightHand = sk.Joints[JointType.HandRight].Position;
             SkeletonPoint leftHand = sk.Joints[JointType.HandLeft].Position;

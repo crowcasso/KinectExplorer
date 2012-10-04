@@ -17,11 +17,13 @@ namespace KinectExplorer
 {
     public class TestGame : KinectGame
     {
-        public TestGame(GraphicsDeviceManager graphics, Size resolution) : base(graphics, resolution) { }
+        private SpriteBatch spriteBatch;
+
+        public TestGame(GameParameters gParams) : base(gParams) { }
 
         public override GameConfig GetConfig()
         {
-            return new GameConfig("Test Game", "Thomas", "This is a test game to fill up space and be useless!");
+            return new GameConfig("Kinect Test", "Thomas", "This shows you how the Kinect tracks your body.");
         }
 
         public override void Initialize()
@@ -31,7 +33,7 @@ namespace KinectExplorer
 
         public override void LoadContent(ContentLoader content)
         {
-            
+            spriteBatch = new SpriteBatch(GraphicsDevice);
         }
 
         public override void Update(GameTime gameTime)

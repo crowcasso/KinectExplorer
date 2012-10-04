@@ -60,6 +60,10 @@
     <XnaCompressContent>true</XnaCompressContent>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BerkeliumSharp, Version=1.0.3740.9585, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\BerkeliumSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Kinect, Version=1.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86">
       <Private>False</Private>
@@ -95,6 +99,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml">
       <Private>False</Private>
     </Reference>
@@ -109,13 +114,16 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BrowserGame.cs" />
+    <Compile Include="DepthGame.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="GameMenu.cs" />
-    <Compile Include="Slideshow.cs" />
+    <Compile Include="SlideshowGame.cs" />
     <Compile Include="TestGame.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="BerkeliumSharp.dll" />
     <Content Include="FaceTrackLib.dll" />
     <Content Include="Game.ico" />
     <Content Include="GameThumbnail.png" />

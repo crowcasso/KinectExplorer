@@ -12,6 +12,7 @@ namespace KinectExplorer
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+        [STAThread]
         static void Main(string[] args)
         {
             List<Type> games = new List<Type>();

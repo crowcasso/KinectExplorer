@@ -15,6 +15,14 @@ using System.Diagnostics;
 
 namespace KinectExplorer
 {
+    /// <summary>
+    /// Runs a KinectGame, simulating an environment in which
+    /// it would be run with other games.
+    /// 
+    /// To test a game, only the following methods should be overridden:
+    /// GetKinectGame(),
+    /// GetResolution()
+    /// </summary>
     public abstract class KinectGameHost : Game
     {
         protected KinectGame runningGame;
@@ -23,14 +31,29 @@ namespace KinectExplorer
 
         private bool altEnterUp = true;
 
+        /// <summary>
+        /// Creates the KinectGameHost.
+        /// </summary>
         public KinectGameHost() : base()
         {
             graphics = new GraphicsDeviceManager(this);
         }
 
-        protected abstract Type getKinnectGame();
-        protected virtual Size getResolution() { return new Size(800, 600); }
-        protected virtual String getContentRoot(Type t) { return ""; }
+        /// <summary>
+        /// Should return the type of your KinectGame.
+        /// For instance, if you have a game named MyKinectGame, this should
+        /// return typeof(MyKinectGame).
+        /// </summary>
+        /// <returns>The type of the KinectGame this is hosting</returns>
+        protected abstract Type GetKinnectGame();
+        /// <summary>
+        /// Should return the resolution the game will be tested at.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual Size GetResolution() { return new Size(800, 600); }
+
+
+        protected virtual String GetContentRoot(Type t) { return ""; }
 
         protected override void LoadContent()
         {
@@ -49,7 +72,7 @@ namespace KinectExplorer
         {
             base.Initialize();
 
-            resolution = getResolution();
+            resolution = GetResolution();
 
             graphics.PreferredBackBufferWidth = resolution.Width;
             graphics.PreferredBackBufferHeight = resolution.Height;
@@ -57,7 +80,7 @@ namespace KinectExplorer
 
             KinectManager.Start(); 
 
-            StartGame(getKinnectGame());
+            StartGame(GetKinnectGame());
         }
 
         protected override void Update(GameTime gameTime)
@@ -127,16 +150,16 @@ namespace KinectExplorer
         {
             try
             {
-                KinectGame game = KinectGame.Create(t, graphics, resolution);
+                KinectGame game = KinectGame.Create(t, new GameParameters(resolution, graphics, Window));
 
-                game.LoadContent(Content, getContentRoot(t));
+                game.LoadContent(Content, GetContentRoot(t));
                 game.Initialize();
 
                 KinectManager.Kinect.ColorFrameReady += game.OnKinectVideoFrameReady;
                 KinectManager.Kinect.SkeletonFrameReady += game.OnKinectSkeletonFrameReady;
+                KinectManager.Kinect.SkeletonFrameReady += game.OnKinectSkeletonFrameReady;
                 KinectManager.Kinect.DepthFrameReady += game.OnKinectDepthFrameReady;
                 runningGame = game;
-
             }
             catch (Exception e)
             {
@@ -157,3 +180,4 @@ namespace KinectExplorer
         }
     }
 }
+
