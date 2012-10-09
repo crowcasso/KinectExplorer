@@ -32,6 +32,8 @@ namespace KinectExplorer
         private Texture2D cursorTexture;
         private float cursorRotation;
         private Vector2 cursorPosition;
+        private bool cursorVisible;
+        private float cursorOpacity;
 
         private List<SkeletonPoint> cursorTrail = new List<SkeletonPoint>();
         private const int MAX_TRAIL = 10;
@@ -207,8 +209,16 @@ namespace KinectExplorer
 
         protected override void UpdateHost(GameTime gameTime)
         {
+            cursorVisible = false;
             if (PrimarySkeleton != null)
             {
+                if (PrimarySkeleton.Joints[JointType.HandRight].TrackingState != JointTrackingState.Tracked)
+                {
+                    return;
+                }
+
+                cursorVisible = true;
+
                 float friction = 0.85f;
                 float depth = PrimarySkeleton.Joints[JointType.HandRight].Position.Z;
                 Vector2 rightHandPos = KinectManager.GetJointPosOnScreen(PrimarySkeleton.Joints[JointType.HandRight], resolution);
@@ -340,13 +350,6 @@ namespace KinectExplorer
                 drawGameRect(i, spriteBatch);
             }
 
-            if (PrimarySkeleton != null)
-            {
-                int width = 50;
-                int height = 50 * cursorTexture.Height / cursorTexture.Width;
-                spriteBatch.Draw(cursorTexture, new Rectangle((int)cursorPosition.X, (int)cursorPosition.Y, width, height), null, Color.White, cursorRotation, new Vector2(width / 2, height / 2), SpriteEffects.None, 0);
-            }
-
             int border = 25;
             Rectangle rect = new Rectangle(border, 10, resolution.Width - border * 2, 90);
             spriteBatch.Draw(titleTexture, rect, new Color(75, 0, 150));
@@ -354,14 +357,34 @@ namespace KinectExplorer
             String message = "To play an app, hover over its center. To quit it, put your hands on your head.";
             TextUtils.DrawTextInRect(spriteBatch, directionsFont, message, rect, Color.White, true);
 
+            if (PrimarySkeleton != null)
+            {
+                if (cursorVisible)
+                {
+                    cursorOpacity = 0.1f + 0.9f * cursorOpacity;
+                }
+                else
+                {
+                    cursorOpacity = 0.9f * cursorOpacity;
+                }
+                int width = 50;
+                int height = 50 * cursorTexture.Height / cursorTexture.Width;
+                Color color = Color.White;
+                color.A = (byte)(255 * cursorOpacity);
+                spriteBatch.Draw(cursorTexture, new Rectangle((int)cursorPosition.X, (int)cursorPosition.Y, width, height), null, color, cursorRotation, new Vector2(width / 2, height / 2), SpriteEffects.None, 0);
+            }
+
             spriteBatch.End();
         }
 
         private bool isHandRaised()
         {
             if (PrimarySkeleton == null) return false;
-            return PrimarySkeleton.Joints[JointType.HandRight].Position.Y > 
-                PrimarySkeleton.Joints[JointType.ElbowRight].Position.Y;
+            Joint rightHand = PrimarySkeleton.Joints[JointType.HandRight];
+            if (rightHand.TrackingState != JointTrackingState.Tracked) return false;
+
+            return PrimarySkeleton.Joints[JointType.HandRight].Position.Y - 
+                PrimarySkeleton.Joints[JointType.ElbowRight].Position.Y > 0.1;
         }
 
         private bool handsOnHead()
@@ -409,7 +432,7 @@ namespace KinectExplorer
             int offX = 40;
             int height = (resolution.Height - offY) / 2;
             int width = height;
-            int border = 10;
+            int border = 30;
             for (int i = 0; i < gameRects.Length; i++)
             {
                 int offI = i - 2 * gameRectOffset;
@@ -470,6 +493,8 @@ namespace KinectExplorer
 
         private void startGame(int index)
         {
+            if (index < 0 || index >= games.Length) return;
+
             cursorTrail.Clear();
             selectedGame = -1;
             gamePaused = false;
