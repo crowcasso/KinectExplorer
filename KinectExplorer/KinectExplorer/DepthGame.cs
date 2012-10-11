@@ -23,7 +23,7 @@ namespace KinectExplorer
 
         public override GameConfig GetConfig()
         {
-            return new GameConfig("Depth Test", "Thomas", "This shows you how the Kinect tracks depth.");
+            return new GameConfig("Depth Test", "Thomas", "This shows you how the Kinect tracks depth.", true, 30);
         }
 
         public override void Initialize()
