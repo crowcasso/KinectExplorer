@@ -72,7 +72,7 @@ namespace KinectExplorer
                 }
                 else
                 {
-                    y += DrawCenteredText(spriteBatch, font, line, rect.Left, (int)(size.X + 1), (int)y, color);
+                    y += DrawCenteredText(spriteBatch, font, line, rect.Left, rect.Left + (int)(size.X + 1), (int)y, color);
                 }
 
             }

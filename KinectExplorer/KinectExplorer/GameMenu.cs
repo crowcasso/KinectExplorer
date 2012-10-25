@@ -52,7 +52,7 @@ namespace KinectExplorer
         private TimeSpan BREAK_SCREEN_SAVER = new TimeSpan(0, 0, 3);
         private TimeSpan handRaised = new TimeSpan();
 
-        private const int SCROLL_AREA_X = 1440;
+        private const int SCROLL_AREA_X = 960;
 
         private Texture2D borderTexture, titleTexture;
         
@@ -96,8 +96,6 @@ namespace KinectExplorer
 
         public GameMenu(Type[] games, String[] gameDirs) : base()
         {
-
-
             this.games = games;
             this.gameDirs = gameDirs;
             for (int i = 0; i < 1; i++)
@@ -362,7 +360,7 @@ namespace KinectExplorer
             Texture2D screen = KinectManager.GetScreen(graphics);
             if (screen != null)
             {
-                spriteBatch.Draw(screen, new Rectangle(0, 0, resolution.Width, resolution.Height), new Color(255, 255, 255, 255));
+                spriteBatch.Draw(screen, new Rectangle(0, 0, resolution.Width, resolution.Height), new Color(190, 101, 191, 128));
             }
 
             for (int i = 0; i < games.Length; i++)
@@ -468,19 +466,15 @@ namespace KinectExplorer
 
         private void updateGameRects(float friction)
         {
-            int offset = 12;
-            int width = (resolution.Width - 1440 - (offset * 2));
-            int height = width;
-
-            Debug.WriteLine("gameRectOffset = " + gameRectOffset);
+            int offset = 3;
+            int width = (resolution.Width - SCROLL_AREA_X - (offset * 2));
+            int height = 64; //(int)((float)width/1.5);
 
             for (int i = 0; i < gameRects.Length; i++)
             {
                 int offI = i - gameRectOffset;
-
                 Rectangle rect = new Rectangle(0, 0, width, height);
                 rect.Offset(new Point(SCROLL_AREA_X + offset, offI * (height + offset)));
-
                 gameRects[i] = new Rectangle((int)Math.Round(lerp(gameRects[i].X, rect.X, friction)), (int)Math.Round(lerp(gameRects[i].Y, rect.Y, friction)), rect.Width, rect.Height);
             }
         }
@@ -502,22 +496,17 @@ namespace KinectExplorer
                 }
             }
 
-            Rectangle rect = gameRects[index];
-            spriteBatch.Draw(borderTexture, rect, color);
-
             String name = gameConfigs[index].Name;
             String author = "by " + gameConfigs[index].Author;
             String description = gameConfigs[index].Description;
 
-            float y = rect.Y + 25;
+            Vector2 size = titleFont.MeasureString(name);
+            Rectangle rect = gameRects[index];
+            rect.X = 1920 - ((int)size.Length() + 20);
+            spriteBatch.Draw(borderTexture, gameRects[index], color);
+            TextUtils.DrawTextInRect(spriteBatch, titleFont, name, rect, Color.White, false);
 
-            name = TextUtils.FitTextToWidth(titleFont, name, rect.Width - 40);
-            String[] nameLines = name.Split('\n');
-            for (int i = 0; i < 2 && i < nameLines.Length; i++)
-            {
-                y += TextUtils.DrawCenteredText(spriteBatch, titleFont, nameLines[i], rect.Left, rect.Right, (int)y, Color.White);
-            }
-
+            /*
             author = TextUtils.CutTextToWidth(authorFont, author, rect.Width - 40);
             y += TextUtils.DrawCenteredText(spriteBatch, authorFont, author, rect.Left, rect.Right, (int)y, Color.Orange);
 
@@ -529,6 +518,7 @@ namespace KinectExplorer
                 if (y + textFont.MeasureString(line).Y > rect.Bottom) break;
                 y += TextUtils.DrawCenteredText(spriteBatch, textFont, line, rect.Left, rect.Right, (int)y, Color.LightBlue);
             }
+            */
         }
 
         private void startGame(int index)
