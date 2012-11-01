@@ -30,9 +30,7 @@ namespace KinectExplorer
 
         public override GameConfig GetConfig()
         {
-            GameConfig config = new GameConfig("Slideshow", "Thomas", "This shouldn't appear, so you're witnessing a bug. Congrats.");
-            config.IsPassive = true;
-            return config;
+           return new GameConfig("Announcements", "Thomas", "The latest announcements.", true, 30);
         }
 
         public override void Initialize()

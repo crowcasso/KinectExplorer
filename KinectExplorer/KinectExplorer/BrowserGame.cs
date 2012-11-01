@@ -25,9 +25,7 @@ namespace KinectExplorer
 
         public override GameConfig GetConfig()
         {
-            GameConfig config = new GameConfig("Pointillism", "Joel", "Draws a picture with dots.");
-            //config.IsPassive = true;
-            return config;
+            return new GameConfig("Pointillism", "Joel", "Draws a picture with dots.", true, 30);
         }
 
         public override void Initialize()
